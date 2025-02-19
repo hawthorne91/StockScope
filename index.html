@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockScope - Personal Stock Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>StockScope</h1>
+        <nav>
+            <ul>
+                <li><a href="#dashboard">Dashboard</a></li>
+                <li><a href="#portfolio">Portfolio</a></li>
+                <li><a href="#alerts">Alerts</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="dashboard">
+            <h2>Market Overview</h2>
+            <div id="stock-search">
+                <input type="text" id="symbol-input" placeholder="Enter stock symbol (e.g., AAPL)">
+                <button id="search-btn">Search</button>
+            </div>
+            <div id="stock-info">
+                <!-- Stock information will be displayed here -->
+            </div>
+        </section>
+
+        <section id="portfolio" style="display: none;">
+            <h2>My Portfolio</h2>
+            <div id="portfolio-summary">
+                <p>Total Value: $0.00</p>
+                <p>Today's Change: $0.00 (0.00%)</p>
+            </div>
+            <div id="holdings">
+                <!-- Portfolio holdings will be displayed here -->
+            </div>
+        </section>
+
+        <section id="alerts" style="display: none;">
+            <h2>Price Alerts</h2>
+            <div id="alert-form">
+                <input type="text" id="alert-symbol" placeholder="Symbol">
+                <input type="number" id="alert-price" placeholder="Target Price">
+                <button id="add-alert">Add Alert</button>
+            </div>
+            <div id="alert-list">
+                <!-- Price alerts will be displayed here -->
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

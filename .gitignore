@@ -1,0 +1,10 @@
+node_modules/
+.env
+.DS_Store
+.claude
+*.log
+dist/
+CLAUDE.md
+.vscode/
+coverage/
+*.tmp
