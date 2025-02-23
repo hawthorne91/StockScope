@@ -138,3 +138,32 @@ button:hover {
 .stock-change.positive {
     color: #27ae60;
 }
+
+.holding-actions {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.holding-actions button {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+#stock-chart {
+    margin-top: 2rem;
+    padding: 1rem;
+    background: #f9f9f9;
+    border-radius: 8px;
+}
+
+#chart-container {
+    text-align: center;
+    margin-top: 1rem;
+}
+
+#price-chart {
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 4px;
+}

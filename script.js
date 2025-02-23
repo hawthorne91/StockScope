@@ -98,6 +98,7 @@ class StockScope {
                     <p><strong>Market Cap:</strong> $${parseInt(data.marketCap).toLocaleString()}</p>
                 </div>
                 <button onclick="app.addToPortfolio('${data.symbol}', ${data.price})">Add to Portfolio</button>
+                <button onclick="app.showChart('${data.symbol}')">Show Chart</button>
             </div>
         `;
     }
@@ -148,7 +149,10 @@ class StockScope {
                     <p><strong>Gain/Loss:</strong> <span class="${gainLoss >= 0 ? 'positive' : 'negative'}">
                         $${gainLoss.toFixed(2)} (${gainLossPercent.toFixed(2)}%)
                     </span></p>
-                    <button onclick="app.removeFromPortfolio(${index})">Remove</button>
+                    <div class="holding-actions">
+                        <button onclick="app.editHolding(${index})">Edit</button>
+                        <button onclick="app.removeFromPortfolio(${index})">Remove</button>
+                    </div>
                 </div>
             `;
         });
@@ -161,6 +165,22 @@ class StockScope {
                 <p><strong>Total Value:</strong> $${totalValue.toFixed(2)}</p>
                 <p><strong>Holdings:</strong> ${this.portfolio.length} stocks</p>
             `;
+        }
+    }
+
+    editHolding(index) {
+        const holding = this.portfolio[index];
+        const newShares = prompt(`Edit shares for ${holding.symbol}:`, holding.shares);
+        const newAvgPrice = prompt(`Edit average price for ${holding.symbol}:`, holding.avgPrice);
+
+        if (newShares !== null && newAvgPrice !== null &&
+            !isNaN(newShares) && !isNaN(newAvgPrice) &&
+            parseFloat(newShares) > 0 && parseFloat(newAvgPrice) > 0) {
+
+            this.portfolio[index].shares = parseFloat(newShares);
+            this.portfolio[index].avgPrice = parseFloat(newAvgPrice);
+            this.savePortfolio();
+            this.loadPortfolio();
         }
     }
 
@@ -227,6 +247,57 @@ class StockScope {
 
     saveAlerts() {
         localStorage.setItem('alerts', JSON.stringify(this.alerts));
+    }
+
+    showChart(symbol) {
+        const chartDiv = document.getElementById('stock-chart');
+        const canvas = document.getElementById('price-chart');
+        const ctx = canvas.getContext('2d');
+
+        chartDiv.style.display = 'block';
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const data = this.generateMockChartData();
+
+        ctx.strokeStyle = '#3498db';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+
+        const maxPrice = Math.max(...data);
+        const minPrice = Math.min(...data);
+        const priceRange = maxPrice - minPrice;
+
+        for (let i = 0; i < data.length; i++) {
+            const x = (i / (data.length - 1)) * (canvas.width - 40) + 20;
+            const y = canvas.height - 20 - ((data[i] - minPrice) / priceRange) * (canvas.height - 40);
+
+            if (i === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        }
+
+        ctx.stroke();
+
+        ctx.fillStyle = '#666';
+        ctx.font = '12px Arial';
+        ctx.fillText(`${symbol} - 30 Day Price Chart`, 20, 15);
+        ctx.fillText(`$${minPrice.toFixed(2)}`, 5, canvas.height - 5);
+        ctx.fillText(`$${maxPrice.toFixed(2)}`, 5, 20);
+    }
+
+    generateMockChartData() {
+        const data = [];
+        let price = 100 + Math.random() * 50;
+
+        for (let i = 0; i < 30; i++) {
+            price += (Math.random() - 0.5) * 5;
+            data.push(Math.max(10, price));
+        }
+
+        return data;
     }
 }
 
