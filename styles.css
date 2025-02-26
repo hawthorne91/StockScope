@@ -166,4 +166,74 @@ button:hover {
     border: 1px solid #ddd;
     background: white;
     border-radius: 4px;
+    max-width: 100%;
+}
+
+@media (max-width: 768px) {
+    nav ul {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    main {
+        padding: 0 0.5rem;
+        margin: 1rem auto;
+    }
+
+    section {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    #stock-search {
+        flex-direction: column;
+    }
+
+    #alert-form {
+        flex-direction: column;
+    }
+
+    .holding-actions {
+        flex-direction: column;
+    }
+
+    #price-chart {
+        width: 100%;
+        height: 200px;
+    }
+
+    header h1 {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    #price-chart {
+        height: 150px;
+    }
+
+    button {
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .stock-card {
+        padding: 0.8rem;
+    }
+}
+
+.data-controls {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ddd;
+    display: flex;
+    gap: 1rem;
+}
+
+.data-controls button {
+    background-color: #27ae60;
+}
+
+.data-controls button:hover {
+    background-color: #229954;
 }

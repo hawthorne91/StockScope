@@ -46,6 +46,11 @@
             <div id="holdings">
                 <!-- Portfolio holdings will be displayed here -->
             </div>
+            <div class="data-controls">
+                <button onclick="app.exportData()">Export Data</button>
+                <input type="file" id="import-file" accept=".json" style="display: none;" onchange="app.importData(this.files[0])">
+                <button onclick="document.getElementById('import-file').click()">Import Data</button>
+            </div>
         </section>
 
         <section id="alerts" style="display: none;">

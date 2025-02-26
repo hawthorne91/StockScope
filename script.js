@@ -242,11 +242,63 @@ class StockScope {
     }
 
     savePortfolio() {
-        localStorage.setItem('portfolio', JSON.stringify(this.portfolio));
+        try {
+            localStorage.setItem('portfolio', JSON.stringify(this.portfolio));
+            localStorage.setItem('portfolioBackup', JSON.stringify({
+                data: this.portfolio,
+                timestamp: new Date().toISOString()
+            }));
+        } catch (e) {
+            console.error('Failed to save portfolio:', e);
+        }
     }
 
     saveAlerts() {
-        localStorage.setItem('alerts', JSON.stringify(this.alerts));
+        try {
+            localStorage.setItem('alerts', JSON.stringify(this.alerts));
+            localStorage.setItem('alertsBackup', JSON.stringify({
+                data: this.alerts,
+                timestamp: new Date().toISOString()
+            }));
+        } catch (e) {
+            console.error('Failed to save alerts:', e);
+        }
+    }
+
+    exportData() {
+        const data = {
+            portfolio: this.portfolio,
+            alerts: this.alerts,
+            exportDate: new Date().toISOString(),
+            version: '1.0'
+        };
+
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `stockscope-data-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    importData(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (data.portfolio) this.portfolio = data.portfolio;
+                if (data.alerts) this.alerts = data.alerts;
+                this.savePortfolio();
+                this.saveAlerts();
+                this.loadPortfolio();
+                this.loadAlerts();
+                alert('Data imported successfully!');
+            } catch (error) {
+                alert('Error importing data: ' + error.message);
+            }
+        };
+        reader.readAsText(file);
     }
 
     showChart(symbol) {
