@@ -237,3 +237,115 @@ button:hover {
 .data-controls button:hover {
     background-color: #229954;
 }
+
+#watchlist-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+#watchlist-symbol {
+    flex: 1;
+    padding: 0.8rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.watchlist-actions {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.watchlist-actions button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+}
+
+@media (max-width: 768px) {
+    #watchlist-controls {
+        flex-direction: column;
+    }
+
+    .watchlist-actions {
+        flex-direction: column;
+    }
+}
+
+#compare-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+#compare-stock1, #compare-stock2 {
+    flex: 1;
+    padding: 0.8rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.comparison-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    gap: 2rem;
+}
+
+.comparison-stock {
+    flex: 1;
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.comparison-vs {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #666;
+    padding: 1rem;
+}
+
+.comparison-analysis {
+    background: #e8f5e8;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid #27ae60;
+}
+
+.comparison-analysis h4 {
+    margin-bottom: 1rem;
+    color: #27ae60;
+}
+
+.comparison-analysis ul {
+    list-style: none;
+    padding: 0;
+}
+
+.comparison-analysis li {
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    background: white;
+    border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+    #compare-controls {
+        flex-direction: column;
+    }
+
+    .comparison-container {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .comparison-vs {
+        order: 2;
+    }
+}

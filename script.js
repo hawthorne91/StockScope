@@ -2,6 +2,7 @@ class StockScope {
     constructor() {
         this.portfolio = JSON.parse(localStorage.getItem('portfolio')) || [];
         this.alerts = JSON.parse(localStorage.getItem('alerts')) || [];
+        this.watchlist = JSON.parse(localStorage.getItem('watchlist')) || [];
         this.init();
     }
 
@@ -10,12 +11,14 @@ class StockScope {
         this.setupNavigation();
         this.loadPortfolio();
         this.loadAlerts();
+        this.loadWatchlist();
     }
 
     setupEventListeners() {
         const searchBtn = document.getElementById('search-btn');
         const symbolInput = document.getElementById('symbol-input');
         const addAlertBtn = document.getElementById('add-alert');
+        const addWatchlistBtn = document.getElementById('add-watchlist');
 
         searchBtn.addEventListener('click', () => this.searchStock());
         symbolInput.addEventListener('keypress', (e) => {
@@ -24,6 +27,15 @@ class StockScope {
 
         if (addAlertBtn) {
             addAlertBtn.addEventListener('click', () => this.addAlert());
+        }
+
+        if (addWatchlistBtn) {
+            addWatchlistBtn.addEventListener('click', () => this.addToWatchlist());
+        }
+
+        const compareBtn = document.getElementById('compare-btn');
+        if (compareBtn) {
+            compareBtn.addEventListener('click', () => this.compareStocks());
         }
     }
 
@@ -99,6 +111,7 @@ class StockScope {
                 </div>
                 <button onclick="app.addToPortfolio('${data.symbol}', ${data.price})">Add to Portfolio</button>
                 <button onclick="app.showChart('${data.symbol}')">Show Chart</button>
+                <button onclick="app.addToWatchlistFromStock('${data.symbol}')">Add to Watchlist</button>
             </div>
         `;
     }
@@ -269,8 +282,9 @@ class StockScope {
         const data = {
             portfolio: this.portfolio,
             alerts: this.alerts,
+            watchlist: this.watchlist,
             exportDate: new Date().toISOString(),
-            version: '1.0'
+            version: '1.1'
         };
 
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -289,10 +303,13 @@ class StockScope {
                 const data = JSON.parse(e.target.result);
                 if (data.portfolio) this.portfolio = data.portfolio;
                 if (data.alerts) this.alerts = data.alerts;
+                if (data.watchlist) this.watchlist = data.watchlist;
                 this.savePortfolio();
                 this.saveAlerts();
+                this.saveWatchlist();
                 this.loadPortfolio();
                 this.loadAlerts();
+                this.loadWatchlist();
                 alert('Data imported successfully!');
             } catch (error) {
                 alert('Error importing data: ' + error.message);
@@ -350,6 +367,214 @@ class StockScope {
         }
 
         return data;
+    }
+
+    addToWatchlist() {
+        const symbol = document.getElementById('watchlist-symbol').value.toUpperCase();
+        if (symbol && !this.watchlist.find(item => item.symbol === symbol)) {
+            const watchlistItem = {
+                symbol: symbol,
+                dateAdded: new Date().toISOString()
+            };
+            this.watchlist.push(watchlistItem);
+            this.saveWatchlist();
+            this.loadWatchlist();
+            document.getElementById('watchlist-symbol').value = '';
+        }
+    }
+
+    addToWatchlistFromStock(symbol) {
+        if (!this.watchlist.find(item => item.symbol === symbol)) {
+            const watchlistItem = {
+                symbol: symbol,
+                dateAdded: new Date().toISOString()
+            };
+            this.watchlist.push(watchlistItem);
+            this.saveWatchlist();
+            this.loadWatchlist();
+            alert(`${symbol} added to watchlist!`);
+        } else {
+            alert(`${symbol} is already in your watchlist!`);
+        }
+    }
+
+    loadWatchlist() {
+        const watchlistItems = document.getElementById('watchlist-items');
+        if (!watchlistItems) return;
+
+        if (this.watchlist.length === 0) {
+            watchlistItems.innerHTML = '<p>No stocks in watchlist yet.</p>';
+            return;
+        }
+
+        let watchlistHTML = '';
+        this.watchlist.forEach((item, index) => {
+            const mockData = this.generateMockStockData(item.symbol);
+            const changeClass = parseFloat(mockData.change) >= 0 ? 'positive' : 'negative';
+            const changeSymbol = parseFloat(mockData.change) >= 0 ? '+' : '';
+
+            watchlistHTML += `
+                <div class="stock-card">
+                    <h4>${item.symbol}</h4>
+                    <div class="stock-price">$${mockData.price}</div>
+                    <div class="stock-change ${changeClass}">
+                        ${changeSymbol}${mockData.change} (${changeSymbol}${mockData.changePercent}%)
+                    </div>
+                    <p><strong>Added:</strong> ${new Date(item.dateAdded).toLocaleDateString()}</p>
+                    <div class="watchlist-actions">
+                        <button onclick="app.showChart('${item.symbol}')">Chart</button>
+                        <button onclick="app.addToPortfolio('${item.symbol}', ${mockData.price})">Add to Portfolio</button>
+                        <button onclick="app.removeFromWatchlist(${index})">Remove</button>
+                    </div>
+                </div>
+            `;
+        });
+
+        watchlistItems.innerHTML = watchlistHTML;
+    }
+
+    removeFromWatchlist(index) {
+        this.watchlist.splice(index, 1);
+        this.saveWatchlist();
+        this.loadWatchlist();
+    }
+
+    saveWatchlist() {
+        try {
+            localStorage.setItem('watchlist', JSON.stringify(this.watchlist));
+        } catch (e) {
+            console.error('Failed to save watchlist:', e);
+        }
+    }
+
+    clearOldBackups() {
+        const backupKeys = ['portfolioBackup', 'alertsBackup'];
+        backupKeys.forEach(key => {
+            const backup = localStorage.getItem(key);
+            if (backup) {
+                try {
+                    const backupData = JSON.parse(backup);
+                    const backupDate = new Date(backupData.timestamp);
+                    const daysDiff = (Date.now() - backupDate.getTime()) / (1000 * 60 * 60 * 24);
+                    if (daysDiff > 30) {
+                        localStorage.removeItem(key);
+                    }
+                } catch (e) {
+                    localStorage.removeItem(key);
+                }
+            }
+        });
+    }
+
+    getStorageUsage() {
+        let totalSize = 0;
+        const usage = {};
+
+        for (let key in localStorage) {
+            if (localStorage.hasOwnProperty(key)) {
+                const size = new Blob([localStorage[key]]).size;
+                totalSize += size;
+                usage[key] = size;
+            }
+        }
+
+        return { total: totalSize, breakdown: usage };
+    }
+
+    compressData() {
+        const now = new Date().toISOString();
+        const compactData = {
+            p: this.portfolio.map(h => ({
+                s: h.symbol,
+                sh: h.shares,
+                ap: h.avgPrice,
+                da: h.dateAdded
+            })),
+            a: this.alerts.map(a => ({
+                s: a.symbol,
+                tp: a.targetPrice,
+                dc: a.dateCreated
+            })),
+            w: this.watchlist.map(w => ({
+                s: w.symbol,
+                da: w.dateAdded
+            })),
+            lu: now
+        };
+
+        try {
+            localStorage.setItem('compactData', JSON.stringify(compactData));
+            this.clearOldBackups();
+        } catch (e) {
+            console.error('Failed to compress data:', e);
+        }
+    }
+
+    compareStocks() {
+        const symbol1 = document.getElementById('compare-stock1').value.toUpperCase();
+        const symbol2 = document.getElementById('compare-stock2').value.toUpperCase();
+
+        if (!symbol1 || !symbol2) {
+            alert('Please enter both stock symbols');
+            return;
+        }
+
+        const stock1Data = this.generateMockStockData(symbol1);
+        const stock2Data = this.generateMockStockData(symbol2);
+
+        this.displayComparison(stock1Data, stock2Data);
+    }
+
+    displayComparison(stock1, stock2) {
+        const resultsDiv = document.getElementById('comparison-results');
+
+        const getChangeClass = (change) => parseFloat(change) >= 0 ? 'positive' : 'negative';
+        const getChangeSymbol = (change) => parseFloat(change) >= 0 ? '+' : '';
+
+        const stock1Change = getChangeClass(stock1.change);
+        const stock2Change = getChangeClass(stock2.change);
+        const stock1Symbol = getChangeSymbol(stock1.change);
+        const stock2Symbol = getChangeSymbol(stock2.change);
+
+        resultsDiv.innerHTML = `
+            <div class="comparison-container">
+                <div class="comparison-stock">
+                    <h3>${stock1.symbol}</h3>
+                    <div class="stock-price">$${stock1.price}</div>
+                    <div class="stock-change ${stock1Change}">
+                        ${stock1Symbol}${stock1.change} (${stock1Symbol}${stock1.changePercent}%)
+                    </div>
+                    <div class="stock-details">
+                        <p><strong>Volume:</strong> ${stock1.volume.toLocaleString()}</p>
+                        <p><strong>Market Cap:</strong> $${parseInt(stock1.marketCap).toLocaleString()}</p>
+                    </div>
+                </div>
+
+                <div class="comparison-vs">VS</div>
+
+                <div class="comparison-stock">
+                    <h3>${stock2.symbol}</h3>
+                    <div class="stock-price">$${stock2.price}</div>
+                    <div class="stock-change ${stock2Change}">
+                        ${stock2Symbol}${stock2.change} (${stock2Symbol}${stock2.changePercent}%)
+                    </div>
+                    <div class="stock-details">
+                        <p><strong>Volume:</strong> ${stock2.volume.toLocaleString()}</p>
+                        <p><strong>Market Cap:</strong> $${parseInt(stock2.marketCap).toLocaleString()}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="comparison-analysis">
+                <h4>Quick Analysis</h4>
+                <ul>
+                    <li><strong>Price Winner:</strong> ${parseFloat(stock1.price) > parseFloat(stock2.price) ? stock1.symbol : stock2.symbol} (Higher price)</li>
+                    <li><strong>Performance:</strong> ${parseFloat(stock1.changePercent) > parseFloat(stock2.changePercent) ? stock1.symbol : stock2.symbol} (Better daily performance)</li>
+                    <li><strong>Volume:</strong> ${stock1.volume > stock2.volume ? stock1.symbol : stock2.symbol} (Higher trading volume)</li>
+                    <li><strong>Market Cap:</strong> ${parseInt(stock1.marketCap) > parseInt(stock2.marketCap) ? stock1.symbol : stock2.symbol} (Larger market cap)</li>
+                </ul>
+            </div>
+        `;
     }
 }
 
