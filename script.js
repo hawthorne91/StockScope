@@ -12,6 +12,8 @@ class StockScope {
         this.loadPortfolio();
         this.loadAlerts();
         this.loadWatchlist();
+        this.requestNotificationPermission();
+        this.startAlertChecking();
     }
 
     setupEventListeners() {
@@ -235,15 +237,23 @@ class StockScope {
 
         let alertsHTML = '';
         this.alerts.forEach((alert, index) => {
+            const isTriggered = alert.triggered;
+            const cardClass = isTriggered ? 'stock-card triggered-alert' : 'stock-card';
+
             alertsHTML += `
-                <div class="stock-card">
+                <div class="${cardClass}">
                     <h4>${alert.symbol}</h4>
                     <p><strong>Target Price:</strong> $${alert.targetPrice.toFixed(2)}</p>
                     <p><strong>Created:</strong> ${new Date(alert.dateCreated).toLocaleDateString()}</p>
+                    ${isTriggered ? `<p><strong>Triggered:</strong> ${new Date(alert.triggerDate).toLocaleDateString()}</p>` : ''}
                     <button onclick="app.removeAlert(${index})">Remove Alert</button>
                 </div>
             `;
         });
+
+        if (this.alerts.some(alert => alert.triggered)) {
+            alertsHTML = '<button onclick="app.clearTriggeredAlerts()">Clear Triggered Alerts</button>' + alertsHTML;
+        }
 
         alertList.innerHTML = alertsHTML;
     }
@@ -575,6 +585,82 @@ class StockScope {
                 </ul>
             </div>
         `;
+    }
+
+    requestNotificationPermission() {
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+    }
+
+    showNotification(title, body, icon = null) {
+        if ('Notification' in window && Notification.permission === 'granted') {
+            const notification = new Notification(title, {
+                body: body,
+                icon: icon || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2327ae60"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
+                badge: icon,
+                requireInteraction: true,
+                actions: [
+                    { action: 'view', title: 'View Details' },
+                    { action: 'dismiss', title: 'Dismiss' }
+                ]
+            });
+
+            notification.onclick = function() {
+                window.focus();
+                notification.close();
+            };
+
+            setTimeout(() => {
+                notification.close();
+            }, 10000);
+        }
+    }
+
+    startAlertChecking() {
+        setInterval(() => {
+            this.checkAlerts();
+        }, 60000);
+    }
+
+    checkAlerts() {
+        this.alerts.forEach((alert, index) => {
+            const mockData = this.generateMockStockData(alert.symbol);
+            const currentPrice = parseFloat(mockData.price);
+            const targetPrice = alert.targetPrice;
+
+            const priceDiff = Math.abs(currentPrice - targetPrice);
+            const percentDiff = (priceDiff / targetPrice) * 100;
+
+            if (percentDiff <= 2) {
+                this.showNotification(
+                    `Price Alert: ${alert.symbol}`,
+                    `${alert.symbol} is trading at $${currentPrice.toFixed(2)}, close to your target of $${targetPrice.toFixed(2)}`
+                );
+
+                this.alerts[index].triggered = true;
+                this.alerts[index].triggerDate = new Date().toISOString();
+                this.saveAlerts();
+            }
+        });
+    }
+
+    clearTriggeredAlerts() {
+        this.alerts = this.alerts.filter(alert => !alert.triggered);
+        this.saveAlerts();
+        this.loadAlerts();
+    }
+
+    showStorageUsage() {
+        const usage = this.getStorageUsage();
+        const usageKB = (usage.total / 1024).toFixed(2);
+
+        let breakdown = 'Storage Usage Breakdown:\n\n';
+        for (const [key, size] of Object.entries(usage.breakdown)) {
+            breakdown += `${key}: ${(size / 1024).toFixed(2)} KB\n`;
+        }
+
+        alert(`Total Storage Used: ${usageKB} KB\n\n${breakdown}`);
     }
 }
 
